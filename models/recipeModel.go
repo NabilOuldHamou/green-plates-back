@@ -12,5 +12,5 @@ type Recipe struct {
 	Servings    uint
 	CategoryID  uint
 	Steps       []Step
-	Ingredients []RecipeIngredient `gorm:"foreignKey:RecipeID`
+	Ingredients []RecipeIngredient `gorm:"foreignKey:RecipeID"`
 }
