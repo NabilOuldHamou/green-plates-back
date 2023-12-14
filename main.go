@@ -23,6 +23,7 @@ func main() {
 	api.V1.POST("/auth/signup", controllers.Signup)
 	api.V1.POST("/auth/login", controllers.Login)
 	api.V1.POST("/auth/logout", controllers.Logout)
+	api.V1.GET("/auth/validate", controllers.ValidateToken)
 
 	// Users
 	api.V1.GET("/users", controllers.GetUsers)

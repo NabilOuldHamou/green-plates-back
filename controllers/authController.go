@@ -9,6 +9,7 @@ import (
 	"gorm.io/gorm"
 	"green-plates-back/initializers"
 	"green-plates-back/models"
+	"green-plates-back/token"
 	"net/http"
 	"os"
 	"time"
@@ -118,12 +119,12 @@ func Login(c *gin.Context) {
 }
 
 func createToken(userId uuid.UUID) (string, error) {
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+	newToken := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"bearer":    userId,
 		"expiresAt": time.Now().Add(time.Hour * 24 * 30).Unix(),
 	})
 
-	tokenString, err := token.SignedString([]byte(os.Getenv("JWT_SECRET")))
+	tokenString, err := newToken.SignedString([]byte(os.Getenv("JWT_SECRET")))
 	if err != nil {
 		return "", errors.New("could not create token")
 	}
@@ -134,4 +135,27 @@ func createToken(userId uuid.UUID) (string, error) {
 func Logout(c *gin.Context) {
 	c.SetCookie("Authorization", "", -1, "", "", false, true)
 	c.Status(http.StatusOK)
+}
+
+func ValidateToken(c *gin.Context) {
+
+	parsedToken, err := token.ParseToken(c)
+	if err != nil {
+		c.AbortWithStatus(http.StatusUnauthorized)
+		return
+	}
+
+	if time.Now().Unix() > parsedToken.ExpiresAt.Unix() {
+		c.AbortWithStatus(http.StatusUnauthorized)
+		return
+	}
+
+	var user models.User
+	initializers.DB.First(&user, "id = ?", parsedToken.Bearer)
+	if user.ID == uuid.Nil {
+		c.AbortWithStatus(http.StatusUnauthorized)
+		return
+	}
+
+	c.Status(http.StatusAccepted)
 }

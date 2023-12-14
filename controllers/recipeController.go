@@ -1,10 +1,14 @@
 package controllers
 
 import (
+	"encoding/json"
+	"fmt"
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"green-plates-back/initializers"
 	"green-plates-back/models"
 	"net/http"
+	"strings"
 )
 
 func GetRecipes(c *gin.Context) {
@@ -22,10 +26,49 @@ func GetRecipes(c *gin.Context) {
 }
 
 func CreateRecipe(c *gin.Context) {
-	var recipe models.Recipe
-	if err := c.ShouldBindJSON(&recipe); err != nil {
+	var body struct {
+		Title       string `json:"title"`
+		Description string `json:"description"`
+		PrepTime    uint   `json:"preptime"`
+		CookTime    uint   `json:"cooktime"`
+		Servings    uint   `json:"servings"`
+		CategoryID  uint   `json:"category_id"`
+		Steps       string `json:"steps"`
+	}
+
+	file, _ := c.FormFile("file")
+	splitName := strings.Split(file.Filename, ".")
+	path := "assets/recipes/" + uuid.New().String() + "." + splitName[len(splitName)-1]
+	if err := c.SaveUploadedFile(file, path); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Unknown error"})
+		return
+	}
+
+	// TODO resize file & change format to JPEG
+
+	if err := c.Bind(&body); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request"})
 		return
+	}
+
+	ingredientsJson := c.PostForm("Ingredients")
+	var ingredients []models.RecipeIngredient
+	if err := json.Unmarshal([]byte(ingredientsJson), &ingredients); err != nil {
+		fmt.Println(err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid ingredients format"})
+		return
+	}
+
+	recipe := models.Recipe{
+		Title:       body.Title,
+		Description: body.Description,
+		ImagePath:   path,
+		PrepTime:    body.PrepTime,
+		CookTime:    body.CookTime,
+		Servings:    body.Servings,
+		CategoryID:  body.CategoryID,
+		Steps:       body.Steps,
+		Ingredients: ingredients,
 	}
 
 	result := initializers.DB.Create(&recipe)

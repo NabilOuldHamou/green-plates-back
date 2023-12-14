@@ -19,8 +19,7 @@ func main() {
 		&models.Ingredient{},
 		&models.Category{},
 		&models.Recipe{},
-		&models.RecipeIngredient{},
-		&models.Step{})
+		&models.RecipeIngredient{})
 	if err != nil {
 		log.Fatalf("Automatic migration has failed : %v", err)
 	}

@@ -7,10 +7,11 @@ type Recipe struct {
 	CreatedAt   time.Time
 	Title       string
 	Description string
+	ImagePath   string
 	PrepTime    uint
 	CookTime    uint
 	Servings    uint
 	CategoryID  uint
-	Steps       []Step
+	Steps       string
 	Ingredients []RecipeIngredient `gorm:"foreignKey:RecipeID"`
 }

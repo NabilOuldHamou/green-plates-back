@@ -12,19 +12,19 @@ import (
 
 func RequireAuth(c *gin.Context) {
 
-	session, err := token.ParseToken(c)
+	parsedToken, err := token.ParseToken(c)
 	if err != nil {
 		c.AbortWithStatus(http.StatusUnauthorized)
 		return
 	}
 
-	if time.Now().Unix() > session.ExpiresAt.Unix() {
+	if time.Now().Unix() > parsedToken.ExpiresAt.Unix() {
 		c.AbortWithStatus(http.StatusUnauthorized)
 		return
 	}
 
 	var user models.User
-	initializers.DB.First(&user, "id = ?", session.Bearer)
+	initializers.DB.First(&user, "id = ?", parsedToken.Bearer)
 	if user.ID == uuid.Nil {
 		c.AbortWithStatus(http.StatusUnauthorized)
 		return
